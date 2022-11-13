@@ -1,3 +1,5 @@
+import { document } from "./dom";
+
 type PeactElementType = "div" | "TEXT_ELEMENT";
 type PeactElement = {
   type: PeactElementType;
@@ -34,9 +36,23 @@ const createTextElement = (text: string) => {
 };
 
 const render = (element: PeactElement, container: Node) => {
-  const dom = document.createElement(element.type);
+  const dom =
+    element.type === "TEXT_ELEMENT"
+      ? document.createTextNode("")
+      : document.createElement(element.type);
+
+  const isProperty = (key: string) => key !== "children";
+  Object.keys(element.props)
+    .filter(isProperty)
+    .forEach((key) => {
+      dom[key] = element.props[key];
+    });
+
+  element.props.children.forEach((child) => render(child, dom));
 
   container.appendChild(dom);
+
+  return container;
 };
 
 const peact = {

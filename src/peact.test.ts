@@ -1,4 +1,5 @@
 import { createElement, render } from "./peact";
+import { document, window } from "./dom";
 
 test("createElement", () => {
   expect(createElement("div")).toStrictEqual({
@@ -47,7 +48,10 @@ test("createElement", () => {
 });
 
 test("render", () => {
+  const expectedDom = document.createElement("div");
+  expectedDom.appendChild(document.createElement("div"));
+
   expect(
     render(createElement("div"), document.createElement("div"))
-  ).toStrictEqual({});
+  ).toStrictEqual(expectedDom);
 });
