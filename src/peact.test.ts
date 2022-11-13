@@ -1,4 +1,4 @@
-import { createElement, render } from "./peact";
+import { createDom, createElement, render } from "./peact";
 import { document, window } from "./dom";
 
 test("createElement", () => {
@@ -47,11 +47,26 @@ test("createElement", () => {
   });
 });
 
-test("render", () => {
-  const expectedDom = document.createElement("div");
-  expectedDom.appendChild(document.createElement("div"));
+describe("createDom", () => {
+  test("<div />", () => {
+    const expectedDom = document.createElement("div");
 
-  expect(
-    render(createElement("div"), document.createElement("div"))
-  ).toStrictEqual(expectedDom);
+    expect(
+      createDom({
+        props: {
+          children: [],
+        },
+        type: "div",
+      })
+    ).toStrictEqual(expectedDom);
+  });
 });
+
+// test("render", () => {
+//   const expectedDom = document.createElement("div");
+//   expectedDom.appendChild(document.createElement("div"));
+
+//   expect(
+//     render(createElement("div"), document.createElement("div"))
+//   ).toStrictEqual(expectedDom);
+// });

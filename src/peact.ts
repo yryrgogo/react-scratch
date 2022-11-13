@@ -8,6 +8,10 @@ type PeactElement = {
     [key: string]: any;
   };
 };
+type Fiber = PeactElement & {
+  dom?: Node;
+  parent?: Node;
+};
 
 const createElement = (
   type: PeactElementType,
@@ -35,25 +39,49 @@ const createTextElement = (text: string) => {
   };
 };
 
-const render = (element: PeactElement, container: Node) => {
-  const dom =
-    element.type === "TEXT_ELEMENT"
-      ? document.createTextNode("")
-      : document.createElement(element.type);
+const isProperty = (key: string) => key !== "children";
 
-  const isProperty = (key: string) => key !== "children";
-  Object.keys(element.props)
+const createDom = (fiber: Fiber): Node => {
+  const dom =
+    fiber.type === "TEXT_ELEMENT"
+      ? document.createTextNode("")
+      : document.createElement(fiber.type);
+  Object.keys(fiber.props)
     .filter(isProperty)
     .forEach((key) => {
-      dom[key] = element.props[key];
+      dom[key] = fiber.props[key];
     });
 
-  element.props.children.forEach((child) => render(child, dom));
-
-  container.appendChild(dom);
-
-  return container;
+  return dom;
 };
+
+const render = (element: PeactElement, container: Node) => {
+  nextUnitOfWork = {
+    dom: container,
+    props: {
+      children: [element],
+    },
+  };
+};
+
+// let nextUnitOfWork = null;
+
+// const workLoop = (deadline) => {
+//   let shouldYield = false;
+//   while (nextUnitOfWork && !shouldYield) {
+//     nextUniOfWork = performUnitOfWork(nextUnitOfWork);
+//     shouldYield = deadline.timeRemaining() < 1;
+//   }
+//   requestIdleCallback(workLoop);
+// };
+
+// requestIdleCallback(workLoop);
+
+// const performUnitOfWork(fiber: Fiber) => {
+//   if (!fiber.dom) {
+//     fiber.dom = createDom(fiber);
+//   }
+// }
 
 const peact = {
   createElement,
@@ -62,4 +90,4 @@ const peact = {
 };
 
 export default peact;
-export { createElement, createTextElement, render };
+export { createDom, createElement, createTextElement, render };
