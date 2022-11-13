@@ -1,4 +1,10 @@
-import { createDom, createElement, render } from "./peact";
+import {
+  createDom,
+  createElement,
+  Fiber,
+  performUnitOfWork,
+  render,
+} from "./peact";
 import { document, window } from "./dom";
 
 test("createElement", () => {
@@ -57,8 +63,69 @@ describe("createDom", () => {
           children: [],
         },
         type: "div",
+        child: null,
+        dom: null,
+        parent: null,
+        sibling: null,
       })
     ).toStrictEqual(expectedDom);
+  });
+});
+
+describe("performUnitOfWork", () => {
+  test("<div />", () => {
+    expect(
+      performUnitOfWork({
+        type: "div",
+        props: {
+          children: [],
+        },
+        dom: null,
+        parent: null,
+        child: null,
+        sibling: null,
+      })
+    ).toStrictEqual(undefined);
+  });
+
+  test("<div><div /></div>", () => {
+    const input: Fiber = {
+      type: "div",
+      props: {
+        children: [{ props: { children: [] }, type: "div" }],
+      },
+      dom: null,
+      parent: null,
+      child: null,
+      sibling: null,
+    };
+    expect(performUnitOfWork(input)).toStrictEqual(
+      // 循環参照を作成するために即時関数を使っている
+      (() => {
+        const child: Fiber = {
+          type: "div",
+          props: {
+            children: [],
+          },
+          dom: null,
+          parent: {
+            type: "div",
+            child: input,
+            dom: document.createElement("div"),
+            parent: null,
+            props: {
+              children: [{ props: { children: [] }, type: "div" }],
+            },
+            sibling: null,
+          },
+          child: null,
+          sibling: null,
+        };
+        input.child = child;
+        child.parent = input;
+        return child;
+      })()
+    );
   });
 });
 
