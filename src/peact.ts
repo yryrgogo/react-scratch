@@ -10,7 +10,7 @@ type PeactElement = {
 };
 type Fiber = PeactElement & {
   dom?: Node;
-  parent?: Node;
+  parent?: Fiber;
 };
 
 const createElement = (
@@ -64,24 +64,32 @@ const render = (element: PeactElement, container: Node) => {
   };
 };
 
-// let nextUnitOfWork = null;
+let nextUnitOfWork = null;
 
-// const workLoop = (deadline) => {
-//   let shouldYield = false;
-//   while (nextUnitOfWork && !shouldYield) {
-//     nextUniOfWork = performUnitOfWork(nextUnitOfWork);
-//     shouldYield = deadline.timeRemaining() < 1;
-//   }
-//   requestIdleCallback(workLoop);
-// };
+const workLoop = (deadline) => {
+  let shouldYield = false;
+  while (nextUnitOfWork && !shouldYield) {
+    nextUniOfWork = performUnitOfWork(nextUnitOfWork);
+    shouldYield = deadline.timeRemaining() < 1;
+  }
+  requestIdleCallback(workLoop);
+};
 
-// requestIdleCallback(workLoop);
+requestIdleCallback(workLoop);
 
-// const performUnitOfWork(fiber: Fiber) => {
-//   if (!fiber.dom) {
-//     fiber.dom = createDom(fiber);
-//   }
-// }
+const performUnitOfWork = (fiber: Fiber) => {
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber);
+  }
+
+  if (fiber.parent) {
+    const parentDom = fiber.parent?.dom;
+    if (!parentDom) {
+      throw new Error("parent dom is not found");
+    }
+    parentDom.appendChild(fiber.dom);
+  }
+};
 
 const peact = {
   createElement,
