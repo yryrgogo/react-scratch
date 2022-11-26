@@ -4,7 +4,7 @@ import {
   Fiber,
   performUnitOfWork,
   render,
-} from "./peact";
+} from ".";
 import { document, window } from "./dom";
 
 test("createElement", () => {

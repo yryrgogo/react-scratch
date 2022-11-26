@@ -1,6 +1,5 @@
-import jsdom from "jsdom";
+import { JSDOM } from "jsdom";
 
-const { JSDOM } = jsdom;
 const dom = new JSDOM();
 dom.reconfigure({ url: "http://localhost" });
 const { window } = dom;

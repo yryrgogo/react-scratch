@@ -1,4 +1,4 @@
-import { document } from "./dom";
+// import { document } from "./dom";
 
 type PeactElementType = "div" | "TEXT_ELEMENT";
 type PeactElement = {
@@ -51,6 +51,7 @@ const createDom = (fiber: Fiber): Node => {
   Object.keys(fiber.props)
     .filter(isProperty)
     .forEach((key) => {
+      // @ts-ignore
       dom[key] = fiber.props[key];
     });
 
@@ -58,38 +59,58 @@ const createDom = (fiber: Fiber): Node => {
 };
 
 const render = (element: PeactElement, container: Node) => {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: container,
     props: {
       children: [element],
     },
+    child: null,
+    parent: null,
+    sibling: null,
+    // TODO: div で良いのか？
+    type: "div",
   };
+  nextUnitOfWork = wipRoot;
 };
 
-let nextUnitOfWork = null;
+let nextUnitOfWork: Fiber | null = null;
+let wipRoot: Fiber | null = null;
 
-// const workLoop = (deadline) => {
-//   let shouldYield = false;
-//   while (nextUnitOfWork && !shouldYield) {
-//     nextUniOfWork = performUnitOfWork(nextUnitOfWork);
-//     shouldYield = deadline.timeRemaining() < 1;
-//   }
-//   requestIdleCallback(workLoop);
-// };
+const commitRoot = () => {
+  commitWork(wipRoot?.child || null);
+  wipRoot = null;
+};
 
-// requestIdleCallback(workLoop);
+const commitWork = (fiber: Fiber | null) => {
+  console.log("commitWork: ", fiber);
+  if (!fiber) {
+    return;
+  }
+  if (fiber.dom) {
+    fiber.parent?.dom?.appendChild(fiber.dom);
+  }
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+};
+
+const workLoop = (deadline: IdleDeadline) => {
+  let shouldYield = false;
+  while (nextUnitOfWork && !shouldYield) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+    shouldYield = deadline.timeRemaining() < 1;
+  }
+
+  if (!nextUnitOfWork && wipRoot) {
+    console.log("wipRoot: ", wipRoot);
+    commitRoot();
+  }
+
+  requestIdleCallback(workLoop);
+};
 
 const performUnitOfWork = (fiber: Fiber) => {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber);
-  }
-
-  if (fiber.parent) {
-    const parentDom = fiber.parent?.dom;
-    if (!parentDom) {
-      throw new Error("parent dom is not found");
-    }
-    parentDom.appendChild(fiber.dom);
   }
 
   const elements = fiber.props.children;
@@ -120,7 +141,7 @@ const performUnitOfWork = (fiber: Fiber) => {
     index++;
   }
 
-  // 再帰呼び出しされるわけではないのだが、Fiber のトレースは DFS と同じ
+  // 再帰呼び出しされるわけではないのだが、Fiber のトレースは DFS に似てる
   if (fiber.child) {
     return fiber.child;
   }
@@ -131,7 +152,11 @@ const performUnitOfWork = (fiber: Fiber) => {
     }
     nextFiber = nextFiber.parent;
   }
+
+  return null;
 };
+
+requestIdleCallback(workLoop);
 
 const peact = {
   createElement,
